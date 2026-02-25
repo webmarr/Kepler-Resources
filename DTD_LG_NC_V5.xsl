@@ -166,7 +166,10 @@
    <xsl:variable name="cls" select="normalize-space(concat(if(@align) then concat('align-', @align) else '', ' ', if(@retrait) then concat('retrait-', @retrait) else ''))"/>
    <xsl:if test="$cls != ''"><xsl:attribute name="class" select="$cls"/></xsl:if>
    
-   <a href="#back-{../@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
+   <!--<a href="#back-{../@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
+    <xsl:value-of select="$num"/>    
+   </a>-->
+   <a href="#back-{../@id}">
     <xsl:value-of select="$num"/>    
    </a>
    <xsl:text>. </xsl:text>
