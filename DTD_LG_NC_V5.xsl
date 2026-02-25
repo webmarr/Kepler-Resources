@@ -59,7 +59,7 @@
    <xsl:call-template name="document-structure">
     <xsl:with-param name="title-value" select="'Copyright'"/><xsl:with-param name="body-type" select="'frontmatter'"/>
     <xsl:with-param name="content">
-     <section class="copyright" epub:type="copyright-page" role="doc-copyright">
+     <section class="copyright" epub:type="copyright-page" role="doc-chapter">
       <xsl:apply-templates select="ident/info | ident/copy | ident/ean | ident/coned"/>
      </section>
     </xsl:with-param>
@@ -69,7 +69,8 @@
   <xsl:for-each select="ident/dedi">
    <xsl:result-document href="chap_03_dedi_{format-number(position(), '00')}.xhtml">
     <xsl:call-template name="document-structure">
-     <xsl:with-param name="title-value" select="''"/><xsl:with-param name="body-type" select="'frontmatter'"/>
+     <xsl:with-param name="title-value" select="if(.//n or .//tit) then (.//n | .//tit) else 'Dedication'"/>
+     <xsl:with-param name="body-type" select="'frontmatter'"/>
      <xsl:with-param name="content"><section epub:type="dedication" role="doc-dedication"><xsl:apply-templates select="."/></section></xsl:with-param>
     </xsl:call-template>
    </xsl:result-document>
@@ -78,8 +79,9 @@
   <xsl:for-each select="ident/exer">
    <xsl:result-document href="chap_03_exer_{format-number(position(), '00')}.xhtml">
     <xsl:call-template name="document-structure">
-     <xsl:with-param name="title-value" select="''"/><xsl:with-param name="body-type" select="'frontmatter'"/>
-     <xsl:with-param name="content"><section epub:type="epigraph" role="doc-epigraph"><xsl:apply-templates select="."/></section></xsl:with-param>
+     <xsl:with-param name="title-value" select="if(.//n or .//tit) then (.//n | .//tit) else 'Exergue'"/>
+     <xsl:with-param name="body-type" select="'frontmatter'"/>
+     <xsl:with-param name="content"><section epub:type="epigraph" role="doc-chapter"><xsl:apply-templates select="."/></section></xsl:with-param>
     </xsl:call-template>
    </xsl:result-document>
   </xsl:for-each>
