@@ -143,19 +143,24 @@
   </html>
  </xsl:template>
  
- <xsl:template match="apnb"><xsl:variable name="num" select="count(preceding::apnb) + 1"/><sup class="noteref"><a epub:type="noteref" role="doc-noteref" href="#{@id}" id="back-{@id}"><xsl:value-of select="$num"/></a></sup></xsl:template>
- <xsl:template match="defnotes"><section epub:type="footnotes" role="doc-footnotes" class="footnotes"><xsl:apply-templates/></section></xsl:template>
+ <xsl:template match="apnb">
+  <xsl:variable name="num" select="count(preceding::apnb) + 1"/>
+  <sup class="noteref">
+   <a epub:type="noteref" role="doc-noteref" href="#{@id}" id="back-{@id}">
+    <xsl:value-of select="$num"/>
+   </a>
+  </sup>
+ </xsl:template>
+ 
  <xsl:template match="ntb">
   <xsl:variable name="num" select="count(preceding::ntb) + 1"/>
   <aside epub:type="footnote" role="doc-footnote" id="{@id}">
    <div class="footnote-content">
-    <p class="align-justif">
-     <a href="#back-{@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
-      <xsl:value-of select="$num"/>
-      <xsl:text>. </xsl:text>
-     </a>
-     <xsl:apply-templates/>
-    </p>
+    <a href="#back-{@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
+     <xsl:value-of select="$num"/>
+     <xsl:text>. </xsl:text>
+    </a>
+    <xsl:apply-templates/>
    </div>
   </aside>
  </xsl:template>
