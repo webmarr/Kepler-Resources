@@ -48,7 +48,7 @@
    <xsl:call-template name="document-structure">
     <xsl:with-param name="title-value" select="$bookTitle"/><xsl:with-param name="body-type" select="'frontmatter'"/>
     <xsl:with-param name="content">
-     <section class="titlepage" epub:type="titlepage" role="doc-titlepage">
+     <section class="titlepage" epub:type="titlepage">
       <xsl:apply-templates select="ident/ftit | ident/auteur | ident/tit | ident/edit"/>
      </section>
     </xsl:with-param>
