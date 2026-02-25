@@ -28,6 +28,22 @@
  <xsl:variable name="bookTitle" select="/livre/ident/tit"/>
  
  <xsl:template match="/livre">
+  
+  <xsl:result-document href="cover.xhtml">
+   <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE html&gt;&#10;</xsl:text>
+   <html xmlns="http://www.w3.org/1999/xhtml" lang="fr-FR" xml:lang="fr-FR" xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+     <title><xsl:value-of select="$bookTitle"/></title>
+     <link href="../Styles/styles.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body epub:type="cover" class="bodypp">
+     <section epub:type="cover" class="sectionpp">
+      <img src="../Images/cover.jpg" alt="Couverture" class="imagepp"/>
+     </section>
+    </body>
+   </html>
+  </xsl:result-document>
+  
   <xsl:result-document href="nav.xhtml">
    <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE html&gt;&#10;</xsl:text>
    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="fr-FR" xml:lang="fr-FR">
