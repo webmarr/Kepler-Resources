@@ -13,7 +13,9 @@
   <!ENTITY lsquo   "&#8216;">
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
- xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
+ xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+ xmlns:epub="http://www.idpf.org/2007/ops"
+ xmlns="http://www.w3.org/1999/xhtml"
  exclude-result-prefixes="xs epub" version="3.0">
  
  <xsl:character-map name="spaces-only">
@@ -22,6 +24,8 @@
  </xsl:character-map>
  
  <xsl:output method="xhtml" indent="yes" use-character-maps="spaces-only" include-content-type="no"/>
+ 
+ <xsl:variable name="bookTitle" select="/livre/ident/tit"/>
  
  <xsl:template match="/livre">
   <xsl:result-document href="nav.xhtml">
@@ -32,45 +36,47 @@
      <nav epub:type="toc" id="toc" role="doc-toc">
       <h1>Table des matières</h1>
       <ol>
-       <li><a href="chap_01_titlePage.xhtml"><xsl:value-of select="ident/tit"/></a></li>
+       <li><a href="chap_01_titlePage.xhtml"><xsl:value-of select="$bookTitle"/></a></li>
+       <xsl:for-each select="ident/dedi">
+        <li><a href="chap_03_dedi_{format-number(position(), '00')}.xhtml">Dédicace</a></li>
+       </xsl:for-each>
+       <xsl:for-each select="ident/exer">
+        <li><a href="chap_03_exer_{format-number(position(), '00')}.xhtml">Exergue</a></li>
+       </xsl:for-each>
+       
        <xsl:for-each select="//part">
         <xsl:variable name="pPos" select="format-number(position(), '00')"/>
-        <li>
-         <a href="chap_04_part_{$pPos}.xhtml"><xsl:value-of select="tit"/></a>
+        <li><a href="chap_04_part_{$pPos}.xhtml"><xsl:value-of select="tit"/></a>
          <ol>
           <xsl:for-each select="chap">
-           <li><a href="chap_04_part_{$pPos}_chap_{format-number(position(), '00')}.xhtml"><xsl:value-of select=".//n | .//tit"/></a></li>
+           <li><a href="chap_04_part_{$pPos}_chap_{format-number(position(), '00')}.xhtml">
+            <xsl:choose>
+             <xsl:when test=".//n or .//tit"><xsl:value-of select=".//n | .//tit"/></xsl:when>
+             <xsl:otherwise><xsl:value-of select="$bookTitle"/></xsl:otherwise>
+            </xsl:choose>
+           </a></li>
           </xsl:for-each>
          </ol>
         </li>
        </xsl:for-each>
+       <xsl:for-each select="//appen">
+        <li><a href="chap_05_appen_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
+       </xsl:for-each>
+       <xsl:for-each select="//collec">
+        <li><a href="chap_06_collec_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
+       </xsl:for-each>
       </ol>
      </nav>
-     <xsl:if test="//rp">
-      <nav epub:type="page-list" id="page-list" hidden="hidden">
-       <ol>
-        <xsl:for-each select="//rp">
-         <xsl:variable name="p" select="format-number(count(ancestor::part/preceding-sibling::part) + 1, '00')"/>
-         <xsl:variable name="c" select="format-number(count(ancestor::chap/preceding-sibling::chap) + 1, '00')"/>
-         <li><a href="chap_04_part_{$p}_chap_{$c}.xhtml#page{@folio}"><xsl:value-of select="@folio"/></a></li>
-        </xsl:for-each>
-       </ol>
-      </nav>
-     </xsl:if>
     </body>
    </html>
   </xsl:result-document>
   
   <xsl:result-document href="chap_01_titlePage.xhtml">
    <xsl:call-template name="document-structure">
-    <xsl:with-param name="title-value" select="ident/tit"/>
-    <xsl:with-param name="body-type" select="'frontmatter'"/>
+    <xsl:with-param name="title-value" select="$bookTitle"/><xsl:with-param name="body-type" select="'frontmatter'"/>
     <xsl:with-param name="content">
      <section class="titlepage" epub:type="titlepage" role="doc-titlepage">
-      <xsl:apply-templates select="ident/ftit"/>
-      <xsl:apply-templates select="ident/auteur"/>
-      <xsl:apply-templates select="ident/tit"/>
-      <xsl:apply-templates select="ident/edit"/>
+      <xsl:apply-templates select="ident/ftit | ident/auteur | ident/tit | ident/edit"/>
      </section>
     </xsl:with-param>
    </xsl:call-template>
@@ -78,47 +84,69 @@
   
   <xsl:result-document href="chap_02_copyright.xhtml">
    <xsl:call-template name="document-structure">
-    <xsl:with-param name="title-value" select="'Copyright'"/>
-    <xsl:with-param name="body-type" select="'frontmatter'"/>
+    <xsl:with-param name="title-value" select="'Copyright'"/><xsl:with-param name="body-type" select="'frontmatter'"/>
     <xsl:with-param name="content">
      <section class="copyright" epub:type="copyright" role="doc-copyright">
-      <xsl:apply-templates select="ident/info"/>
-      <xsl:apply-templates select="ident/copy"/>
-      <xsl:apply-templates select="ident/ean"/>
-      <xsl:apply-templates select="ident/coned"/>
+      <xsl:apply-templates select="ident/info | ident/copy | ident/ean | ident/coned"/>
      </section>
     </xsl:with-param>
    </xsl:call-template>
   </xsl:result-document>
   
+  <xsl:for-each select="ident/dedi">
+   <xsl:result-document href="chap_03_dedi_{format-number(position(), '00')}.xhtml">
+    <xsl:call-template name="document-structure">
+     <xsl:with-param name="title-value" select="''"/><xsl:with-param name="body-type" select="'frontmatter'"/>
+     <xsl:with-param name="content"><section epub:type="dedication" role="doc-dedication"><xsl:apply-templates select="."/></section></xsl:with-param>
+    </xsl:call-template>
+   </xsl:result-document>
+  </xsl:for-each>
+  
+  <xsl:for-each select="ident/exer">
+   <xsl:result-document href="chap_03_exer_{format-number(position(), '00')}.xhtml">
+    <xsl:call-template name="document-structure">
+     <xsl:with-param name="title-value" select="''"/><xsl:with-param name="body-type" select="'frontmatter'"/>
+     <xsl:with-param name="content"><section epub:type="epigraph" role="doc-epigraph"><xsl:apply-templates select="."/></section></xsl:with-param>
+    </xsl:call-template>
+   </xsl:result-document>
+  </xsl:for-each>
+  
   <xsl:for-each select="//part">
    <xsl:variable name="pPos" select="format-number(position(), '00')"/>
    <xsl:result-document href="chap_04_part_{$pPos}.xhtml">
     <xsl:call-template name="document-structure">
-     <xsl:with-param name="title-value" select="tit"/>
-     <xsl:with-param name="body-type" select="'bodymatter'"/>
-     <xsl:with-param name="content">
-      <section class="part" epub:type="part" role="doc-part" id="{@id}">
-       <xsl:apply-templates select="tit"/>
-      </section>
-     </xsl:with-param>
+     <xsl:with-param name="title-value" select="tit"/><xsl:with-param name="body-type" select="'bodymatter'"/>
+     <xsl:with-param name="content"><section class="part" role="doc-part"><xsl:apply-templates select="tit"/></section></xsl:with-param>
     </xsl:call-template>
    </xsl:result-document>
-   
    <xsl:for-each select="chap">
     <xsl:variable name="cPos" select="format-number(position(), '00')"/>
     <xsl:result-document href="chap_04_part_{$pPos}_chap_{$cPos}.xhtml">
      <xsl:call-template name="document-structure">
-      <xsl:with-param name="title-value" select=".//n | .//tit"/>
+      <xsl:with-param name="title-value" select="if(.//n or .//tit) then (.//n | .//tit) else $bookTitle"/>
       <xsl:with-param name="body-type" select="'bodymatter'"/>
-      <xsl:with-param name="content">
-       <section class="chapter" epub:type="chapter" role="doc-chapter" id="{@id}">
-        <xsl:apply-templates/>
-       </section>
-      </xsl:with-param>
+      <xsl:with-param name="content"><section class="chapter" role="doc-chapter" id="{@id}"><xsl:apply-templates/></section></xsl:with-param>
      </xsl:call-template>
     </xsl:result-document>
    </xsl:for-each>
+  </xsl:for-each>
+  
+  <xsl:for-each select="//appen">
+   <xsl:result-document href="chap_05_appen_{format-number(position(), '00')}.xhtml">
+    <xsl:call-template name="document-structure">
+     <xsl:with-param name="title-value" select="tit"/><xsl:with-param name="body-type" select="'backmatter'"/>
+     <xsl:with-param name="content"><section class="appendix" role="doc-appendix"><xsl:apply-templates/></section></xsl:with-param>
+    </xsl:call-template>
+   </xsl:result-document>
+  </xsl:for-each>
+  
+  <xsl:for-each select="//collec">
+   <xsl:result-document href="chap_06_collec_{format-number(position(), '00')}.xhtml">
+    <xsl:call-template name="document-structure">
+     <xsl:with-param name="title-value" select="tit"/><xsl:with-param name="body-type" select="'backmatter'"/>
+     <xsl:with-param name="content"><section class="collec"><xsl:apply-templates/></section></xsl:with-param>
+    </xsl:call-template>
+   </xsl:result-document>
   </xsl:for-each>
  </xsl:template>
  
@@ -126,42 +154,21 @@
   <xsl:param name="title-value"/><xsl:param name="body-type"/><xsl:param name="content"/>
   <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE html&gt;&#10;</xsl:text>
   <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="fr-FR" lang="fr-FR">
-   <head>
-    <title><xsl:value-of select="$title-value"/></title>
-    <link href="../Styles/styles.css" rel="stylesheet" type="text/css"/>
-   </head>
+   <head><title><xsl:value-of select="$title-value"/></title><link href="../Styles/styles.css" rel="stylesheet" type="text/css"/></head>
    <body epub:type="{$body-type}"><xsl:sequence select="$content"/></body>
   </html>
  </xsl:template>
  
- <xsl:template match="apnb">
-  <xsl:variable name="num" select="count(preceding::apnb) + 1"/>
-  <sup class="noteref"><a epub:type="noteref" role="doc-noteref" href="#{@id}" id="back-{@id}"><xsl:value-of select="$num"/></a></sup>
- </xsl:template>
- 
+ <xsl:template match="apnb"><xsl:variable name="num" select="count(preceding::apnb) + 1"/><sup class="noteref"><a epub:type="noteref" href="#{@id}" id="back-{@id}"><xsl:value-of select="$num"/></a></sup></xsl:template>
  <xsl:template match="defnotes"><section epub:type="footnotes" role="doc-footnotes" class="footnotes"><xsl:apply-templates/></section></xsl:template>
- 
  <xsl:template match="ntb">
   <xsl:variable name="num" select="count(preceding::ntb) + 1"/>
-  <aside epub:type="footnote" role="doc-footnote" id="{@id}">
-   <p><a href="#back-{@id}" role="doc-backlink" epub:type="backlink" class="footnote-number"><xsl:value-of select="$num"/>. </a><xsl:apply-templates/></p>
-  </aside>
+  <aside epub:type="footnote" id="{@id}"><div class="footnote-content"><a href="#back-{@id}" role="doc-backlink" epub:type="backlink" class="footnote-number"><xsl:value-of select="$num"/>. </a><xsl:apply-templates/></div></aside>
  </xsl:template>
  
- <xsl:template match="ident/ftit"><p class="faux-titre"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="ident/auteur"><p class="auteur"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="ident/tit | part/tit"><h1><xsl:apply-templates/></h1></xsl:template>
+ <xsl:template match="ident/tit | part/tit | appen/tit | collec/tit"><h1><xsl:apply-templates/></h1></xsl:template>
  <xsl:template match="chap/n"><h2><xsl:apply-templates/></h2></xsl:template>
  <xsl:template match="cint"><h3><xsl:apply-templates/></h3></xsl:template>
- <xsl:template match="dedi"><div class="dedicace"><xsl:apply-templates/></div></xsl:template>
- <xsl:template match="exer"><div class="exergue"><xsl:apply-templates/></div></xsl:template>
- <xsl:template match="info"><p class="info"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="edit"><p class="edit"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="copy"><p class="copy"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="ean"><p class="ean"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="coned"><p class="coned"><xsl:apply-templates/></p></xsl:template>
- <xsl:template match="dev"><div><xsl:apply-templates/></div></xsl:template>
- 
  <xsl:template match="p">
   <p>
    <xsl:variable name="cls" select="normalize-space(concat(if(@align) then concat('align-', @align) else '', ' ', if(@retrait) then concat('retrait-', @retrait) else ''))"/>
@@ -169,10 +176,12 @@
    <xsl:apply-templates/>
   </p>
  </xsl:template>
- 
- <xsl:template match="img"><figure><img class="width100" src="../Images/{@src}" alt="{@src}"/></figure></xsl:template>
+ <xsl:template match="auteur"><p class="auteur"><xsl:apply-templates/></p></xsl:template>
+ <xsl:template match="ident/ftit | ident/edit | ident/info | ident/edit | ident/copy | ident/ean | ident/coned"><p class="{local-name()}"><xsl:apply-templates/></p></xsl:template>
+ <xsl:template match="dedi | exer | dev"><div><xsl:apply-templates/></div></xsl:template>
+ <xsl:template match="img"><img class="width100" src="../Images/{@src}" alt="{@src}"/></xsl:template>
  <xsl:template match="rp"><span epub:type="pagebreak" role="doc-pagebreak" id="page{@folio}" title="{@folio}"></span></xsl:template>
- <xsl:template match="pc"><span class="small-caps"><xsl:apply-templates/></span></xsl:template>
+ <xsl:template match="pc"><span class="pc"><xsl:apply-templates/></span></xsl:template>
  <xsl:template match="i"><i><xsl:apply-templates/></i></xsl:template>
  <xsl:template match="b"><b><xsl:apply-templates/></b></xsl:template>
  <xsl:template match="sup"><sup><xsl:apply-templates/></sup></xsl:template>
