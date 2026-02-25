@@ -59,7 +59,7 @@
    <xsl:call-template name="document-structure">
     <xsl:with-param name="title-value" select="'Copyright'"/><xsl:with-param name="body-type" select="'frontmatter'"/>
     <xsl:with-param name="content">
-     <section class="copyright" epub:type="copyright" role="doc-copyright">
+     <section class="copyright" epub:type="copyright-page" role="doc-copyright">
       <xsl:apply-templates select="ident/info | ident/copy | ident/ean | ident/coned"/>
      </section>
     </xsl:with-param>
@@ -153,16 +153,25 @@
  </xsl:template>
  
  <xsl:template match="ntb">
-  <xsl:variable name="num" select="count(preceding::ntb) + 1"/>
   <aside epub:type="footnote" role="doc-footnote" id="{@id}">
    <div class="footnote-content">
-    <a href="#back-{@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
-     <xsl:value-of select="$num"/>
-     <xsl:text>. </xsl:text>
-    </a>
-    <xsl:apply-templates/>
+    <xsl:apply-templates select="p"/>
    </div>
   </aside>
+ </xsl:template>
+ 
+ <xsl:template match="ntb/p">
+  <xsl:variable name="num" select="count(../preceding::ntb) + 1"/>
+  <p>
+   <xsl:variable name="cls" select="normalize-space(concat(if(@align) then concat('align-', @align) else '', ' ', if(@retrait) then concat('retrait-', @retrait) else ''))"/>
+   <xsl:if test="$cls != ''"><xsl:attribute name="class" select="$cls"/></xsl:if>
+   
+   <a href="#back-{../@id}" role="doc-backlink" epub:type="backlink" class="footnote-number">
+    <xsl:value-of select="$num"/>    
+   </a>
+   <xsl:text>. </xsl:text>
+   <xsl:apply-templates/>
+  </p>
  </xsl:template>
  
  <xsl:template match="ident/tit | part/tit | appen/tit | collec/tit"><h1><xsl:apply-templates/></h1></xsl:template>
