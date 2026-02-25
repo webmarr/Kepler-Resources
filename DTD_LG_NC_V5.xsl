@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xsl:stylesheet [
-  <!ENTITY nbsp    "&#160;">
-  <!ENTITY thinsp "&#160;">
+  <!ENTITY nbsp   "&#160;">
+  <!ENTITY thinsp "&#8201;">
   <!ENTITY rsquo  "&#8217;">
   <!ENTITY laquo  "&#171;">
   <!ENTITY raquo  "&#187;">
@@ -18,7 +18,7 @@
  
  <xsl:character-map name="spaces-only">
   <xsl:output-character character="&#160;"  string="&amp;#160;"/>
-  <xsl:output-character character="&#8201;" string="&amp;#160;"/>
+  <xsl:output-character character="&#8201;" string="&amp;#x2009;"/>
  </xsl:character-map>
  
  <xsl:output method="xhtml" indent="yes" use-character-maps="spaces-only" include-content-type="no"/>
@@ -35,15 +35,15 @@
      <nav epub:type="toc" id="toc" role="doc-toc">
       <h1>Table des matières</h1>
       <ol>
-       <li><a href="01_titlePage.xhtml"><xsl:value-of select="ident/tit"/></a></li>
+       <li><a href="chap_01_titlePage.xhtml"><xsl:value-of select="ident/tit"/></a></li>
        <xsl:for-each select="corps/chap">
-        <li><a href="04_chap_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
+        <li><a href="chap_04_chap_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
        </xsl:for-each>
        <xsl:for-each select="//appen">
-        <li><a href="05_appen_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
+        <li><a href="chap_05_appen_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
        </xsl:for-each>
        <xsl:for-each select="//collec">
-        <li><a href="06_collec_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
+        <li><a href="chap_06_collec_{format-number(position(), '00')}.xhtml"><xsl:value-of select="tit"/></a></li>
        </xsl:for-each>
       </ol>
      </nav>
@@ -51,7 +51,7 @@
       <nav epub:type="page-list" id="page-list" hidden="hidden">
        <ol>
         <xsl:for-each select="//rp">
-         <li><a href="04_chap_{format-number(count(ancestor::chap/preceding-sibling::chap) + 1, '00')}.xhtml#page{@folio}"><xsl:value-of select="@folio"/></a></li>
+         <li><a href="chap_04_chap_{format-number(count(ancestor::chap/preceding-sibling::chap) + 1, '00')}.xhtml#page{@folio}"><xsl:value-of select="@folio"/></a></li>
         </xsl:for-each>
        </ol>
       </nav>
