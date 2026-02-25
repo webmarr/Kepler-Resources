@@ -231,7 +231,7 @@
   <p class="info"><xsl:apply-templates/></p>
  </xsl:template>
  <xsl:template match="img">
-  <xsl:variable name="nomIMG" select="@id"/>
+  <xsl:variable name="nomIMG" select="@src"/>
   <img class="width100" src="../Images/{$nomIMG}" alt="{$nomIMG}"/>
  </xsl:template>
  <xsl:template match="edit">
