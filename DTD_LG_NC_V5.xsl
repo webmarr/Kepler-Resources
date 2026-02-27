@@ -225,4 +225,4 @@
    <body epub:type="{$body-type}" class="body"><xsl:sequence select="$content"/></body>
   </html>
  </xsl:template>
-
+</xsl:stylesheet>
