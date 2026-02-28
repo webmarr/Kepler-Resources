@@ -216,7 +216,16 @@
   <p><a href="#back-{../@id}" class="footnote-number"><xsl:value-of select="count(../preceding::ntb) + 1"/></a>. <xsl:apply-templates/></p>
  </xsl:template>
  <xsl:template match="defnotes"><section epub:type="footnotes" role="doc-endnotes" class="footnotes"><xsl:apply-templates/></section></xsl:template>
- 
+ <xsl:template match="ident/ftit | ident/auteur | ident/tit | ident/edit">
+  <div class="div_{lower-case(name())}">
+   <p class="{lower-case(name())}"><xsl:apply-templates/></p>
+  </div>
+ </xsl:template>
+ <xsl:template match="ident/copy | ident/ean">
+  <div class="div_{lower-case(name())}">
+   <p class="{lower-case(name())}"><xsl:apply-templates/></p>
+  </div>
+ </xsl:template>
  <xsl:template name="document-structure">
   <xsl:param name="title-value"/><xsl:param name="body-type"/><xsl:param name="content"/>
   <xsl:text disable-output-escaping="yes">&lt;!DOCTYPE html&gt;&#10;</xsl:text>
