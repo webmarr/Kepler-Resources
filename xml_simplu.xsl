@@ -150,10 +150,7 @@
  <xsl:template match="a[span[@class='apnb']]">
   <xsl:variable name="n" select="replace(@href, '\D', '')"/> 
   
-  <a class="_idFootnoteLink antsp" 
-   epub:type="noteref" 
-   href="#footnote-{$n}" 
-   id="AN{$n}">
+  <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="#footnote-{$n}" id="AN{$n}">
    <sup>
     <span class="note">
      <xsl:value-of select="$n"/>
