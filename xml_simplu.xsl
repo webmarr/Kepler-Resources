@@ -164,7 +164,7 @@
  <xsl:template match="p[@class='ntb']">
   <xsl:variable name="n" select="replace(a[1]/@id, '\D', '')"/>
   
-  <aside id="footnote-{$n}" epub:type="footnote">
+  <aside id="footnote-{$n}" epub:type="footnote" role="doc-footnote">
    <p class="footnote-text">
     <a href="#AN{$n}"><xsl:value-of select="$n"/>.</a>
     <xsl:text>&#160;</xsl:text>
