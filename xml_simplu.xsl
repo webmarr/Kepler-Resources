@@ -106,7 +106,7 @@
   <!-- ============================================================ -->
   <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
-   <xsl:variable name="is-front" select="not(self::h1 or self::Journal)"/>
+   <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
    <xsl:result-document href="{$file-name}" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
     <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
