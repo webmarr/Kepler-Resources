@@ -264,5 +264,35 @@
  <xsl:template match="img">
   <img src="../Images/{@src}.png" alt="{@src}"/>
  </xsl:template>
-
+ <xsl:template match="text()[not(ancestor::a)]">
+  <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
+   <xsl:matching-substring>
+    <xsl:variable name="link-complet" select="."/>
+    
+    <xsl:variable name="punct-final" select="if (matches($link-complet, '[.,;!?]$')) then substring($link-complet, string-length($link-complet)) else ''"/>
+    <xsl:variable name="link-curat" select="if ($punct-final != '') then substring($link-complet, 1, string-length($link-complet) - 1) else $link-complet"/>
+    
+    <xsl:variable name="href-final">
+     <xsl:choose>
+      <xsl:when test="starts-with($link-curat, 'www.')">
+       <xsl:value-of select="concat('http://', $link-curat)"/>
+      </xsl:when>
+      <xsl:otherwise>
+       <xsl:value-of select="$link-curat"/>
+      </xsl:otherwise>
+     </xsl:choose>
+    </xsl:variable>
+    
+    <a href="{$href-final}">
+     <xsl:value-of select="$link-curat"/>
+    </a>
+    
+    <xsl:value-of select="$punct-final"/>
+   </xsl:matching-substring>
+   
+   <xsl:non-matching-substring>
+    <xsl:value-of select="."/>
+   </xsl:non-matching-substring>
+  </xsl:analyze-string>
+ </xsl:template>
 </xsl:stylesheet>
