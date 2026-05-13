@@ -301,4 +301,5 @@
    </xsl:non-matching-substring>
   </xsl:analyze-string>
  </xsl:template>
+ <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']]]]"/>
 </xsl:stylesheet>
