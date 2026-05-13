@@ -2,37 +2,28 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs" version="3.0">
-<xsl:template match="node()|@*" name="identity">
-    <xsl:choose>
-        <xsl:when test="self::*">
-            <xsl:element name="{local-name()}">
-                <xsl:apply-templates select="@*|node()"/>
-            </xsl:element>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:copy>
-                <xsl:apply-templates select="@*|node()"/>
-            </xsl:copy>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
- <!--
-  FIX nav.xhtml (v2):
-  1. Titluri curatate: tokenize pe '#' => pastram doar primul segment (titlul fara autor/subtitlu)
-  2. Adaugat nav landmarks (obligatoriu EPUB Accessibility 1.1)
-  3. Adaugat nav page-list generat dinamic din elementele RP (daca exista in document)
-  4. Adaugat meta charset="UTF-8" in head (buna practica EPUB3)
-  5. DOCTYPE pe linie separata de XML declaration (fix vizual Saxon)
-  6. Acelasi fix tokenize aplicat si la <title> din fisierele capitol
--->
+
+ <xsl:template match="node()|@*" name="identity">
+  <xsl:choose>
+   <xsl:when test="self::*">
+    <xsl:element name="{local-name()}">
+     <xsl:apply-templates select="@*|node()"/>
+    </xsl:element>
+   </xsl:when>
+   <xsl:otherwise>
+    <xsl:copy>
+     <xsl:apply-templates select="@*|node()"/>
+    </xsl:copy>
+   </xsl:otherwise>
+  </xsl:choose>
+ </xsl:template>
+
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
+ 
  <xsl:template match="/">
   
-  <!-- ============================================================ -->
-  <!-- NAV.XHTML                                                    -->
-  <!-- ============================================================ -->
   <xsl:variable name="groupInfo">
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
@@ -40,6 +31,7 @@
      is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}"/>
    </xsl:for-each-group>
   </xsl:variable>
+  
   <xsl:result-document href="nav.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
    <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
@@ -50,7 +42,6 @@
     </head>
     <body>
 
-     <!-- NAV 1: TOC - obligatoriu EPUB3 -->
      <nav epub:type="toc" id="toc" role="doc-toc" aria-label="Table des mati&#232;res">
       <h1>Table des mati&#232;res</h1>
       <ol>
@@ -65,8 +56,6 @@
             <xsl:variable name="rawTitle">
              <xsl:apply-templates select="." mode="getText"/>
             </xsl:variable>
-            <!-- FIX: '#' este separator intre titlu si autor/subtitlu in XML sursa.
-                 Pastram doar primul segment. Fallback la textul complet daca primul segment e gol. -->
             <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
             <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
            </xsl:otherwise>
@@ -77,7 +66,6 @@
       </ol>
      </nav>
 
-     <!-- NAV 2: LANDMARKS - obligatoriu EPUB Accessibility 1.1 -->
      <nav epub:type="landmarks" id="landmarks" hidden="" aria-label="Landmarks">
       <h2>Landmarks</h2>
       <ol>
@@ -91,7 +79,6 @@
       </ol>
      </nav>
 
-     <!-- NAV 3: PAGE-LIST - generat dinamic din RP, inclus doar daca exista in document -->
      <xsl:if test="//RP">
       <nav epub:type="page-list" id="page-list" hidden="" role="doc-pagelist" aria-label="Liste des pages">
        <h2>Liste des pages</h2>
@@ -117,9 +104,6 @@
    </html>
   </xsl:result-document>
 
-  <!-- ============================================================ -->
-  <!-- FISIERE CAPITOL                                              -->
-  <!-- ============================================================ -->
   <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
    <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
@@ -136,7 +120,6 @@
          <xsl:variable name="rawTitle">
           <xsl:apply-templates select="." mode="getText"/>
          </xsl:variable>
-         <!-- Acelasi fix tokenize pentru <title> din pagina -->
          <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
          <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
         </xsl:when>
@@ -151,7 +134,6 @@
        <xsl:apply-templates select="current-group()"/>
        <section class="footnotes" epub:type="footnotes">
         <xsl:variable name="citedNoteIDs" select="current-group()//a[span[@class='apnb']]/substring-after(@href, 'N')"/>
-        
         <xsl:apply-templates select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
        </section>
       </section>
@@ -161,20 +143,20 @@
   </xsl:for-each-group>
 
  </xsl:template>
+
  <xsl:template match="a[span[@class='apnb']]">
   <xsl:variable name="n" select="replace(@href, '\D', '')"/> 
-  
   <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="#footnote-{$n}" id="AN{$n}">
    <sup>
     <span class="note">
      <xsl:value-of select="$n"/>
     </span>
-   </sup>
+    Pop</sup>
   </a>
  </xsl:template>
+
  <xsl:template match="p[@class='ntb']">
   <xsl:variable name="n" select="replace(a[1]/@id, '\D', '')"/>
-  
   <aside id="footnote-{$n}" epub:type="footnote" role="doc-footnote">
    <p class="footnote-text">
     <a href="#AN{$n}"><xsl:value-of select="$n"/>.</a>
@@ -183,9 +165,7 @@
    </p>
   </aside>
  </xsl:template>
- <!-- ============================================================ -->
- <!-- TEMPLATE-URI MODE getText                                    -->
- <!-- ============================================================ -->
+
  <xsl:template match="br" mode="getText">
   <xsl:text> </xsl:text>
  </xsl:template>
@@ -194,14 +174,12 @@
   <xsl:apply-templates mode="getText"/>
  </xsl:template>
 
- <!-- ============================================================ -->
- <!-- TEMPLATE-URI CONTINUT (neschimbate)                         -->
- <!-- ============================================================ -->
  <xsl:template match="h1">
   <h1 class="ChapTit">
    <xsl:apply-templates/>
   </h1>
  </xsl:template>
+
  <xsl:template match="p">
   <p>
    <xsl:if test="@class">
@@ -210,12 +188,15 @@
    <xsl:apply-templates/>
   </p>
  </xsl:template>
+
  <xsl:template match="i">
   <i><xsl:apply-templates/></i>
  </xsl:template>
+
  <xsl:template match="b">
   <b><xsl:apply-templates/></b>
  </xsl:template>
+
  <xsl:template match="span">
   <span>
    <xsl:if test="@class">
@@ -224,30 +205,37 @@
    <xsl:apply-templates/>
   </span>
  </xsl:template>
+
  <xsl:template match="br">
   <br/>
  </xsl:template>
+
  <xsl:template match="RP">
   <span epub:type="pagebreak" role="doc-pagebreak" id="page{@page}" title="{@page}"/>
  </xsl:template>
+
  <xsl:template match="Exergue">
   <div class="Exergue">
    <xsl:apply-templates/>
   </div>
  </xsl:template>
+
  <xsl:template match="Journal">
   <h1 class="journal">
    <xsl:apply-templates/>
   </h1>
  </xsl:template>
+
  <xsl:template match="h2[@class='nchap']">
   <h1 class="nchap">
    <xsl:apply-templates/>
   </h1>
  </xsl:template>
+
  <xsl:template match="p[@type='Etoile']">
   <p class="sep_etoile">&#160;<xsl:apply-templates/></p>
  </xsl:template>
+
  <xsl:template match="h2" priority="10">
   <xsl:element name="{if ($existaNchap) then 'h1' else 'h2'}">
    <xsl:if test="@class='nchap'"><xsl:attribute name="class">nchap</xsl:attribute></xsl:if>
@@ -275,18 +263,23 @@
    <xsl:apply-templates/>
   </xsl:element>
  </xsl:template>
+
  <xsl:template match="img">
-  <img src="../Images/{@src}" alt="{@src}"/>
+  <xsl:copy>
+   <xsl:apply-templates select="@*"/>
+   <xsl:if test="not(@alt) or normalize-space(@alt)=''">
+    <xsl:attribute name="alt" select="replace(tokenize(@src,'/')[last()], '\.[^.]+$', '')"/>
+   </xsl:if>
+   <xsl:apply-templates/>
+  </xsl:copy>
  </xsl:template>
 
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
    <xsl:matching-substring>
     <xsl:variable name="link-complet" select="."/>
-    
     <xsl:variable name="punct-final" select="if (matches($link-complet, '[.,;!?]$')) then substring($link-complet, string-length($link-complet)) else ''"/>
     <xsl:variable name="link-curat" select="if ($punct-final != '') then substring($link-complet, 1, string-length($link-complet) - 1) else $link-complet"/>
-    
     <xsl:variable name="href-final">
      <xsl:choose>
       <xsl:when test="starts-with($link-curat, 'www.')">
@@ -297,14 +290,11 @@
       </xsl:otherwise>
      </xsl:choose>
     </xsl:variable>
-    
     <a href="{$href-final}">
      <xsl:value-of select="$link-curat"/>
     </a>
-    
     <xsl:value-of select="$punct-final"/>
    </xsl:matching-substring>
-   
    <xsl:non-matching-substring>
     <xsl:value-of select="."/>
    </xsl:non-matching-substring>
