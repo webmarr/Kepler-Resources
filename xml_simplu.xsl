@@ -263,12 +263,7 @@
   </xsl:element>
  </xsl:template>
 
-<xsl:template match="*:div[@class]">
-    <xsl:copy>
-        <xsl:apply-templates select="@*"/>
-        <xsl:apply-templates select="node()"/>
-    </xsl:copy>
-</xsl:template>
+
 
 <xsl:template match="img">
     <xsl:copy>
