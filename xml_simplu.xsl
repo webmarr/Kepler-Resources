@@ -3,10 +3,19 @@
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs" version="3.0">
 <xsl:template match="node()|@*" name="identity">
-		<xsl:copy>
-			<xsl:apply-templates select="@*|node()"/>
-		</xsl:copy>
-	</xsl:template>
+    <xsl:choose>
+        <xsl:when test="self::*">
+            <xsl:element name="{local-name()}">
+                <xsl:apply-templates select="@*|node()"/>
+            </xsl:element>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:copy>
+                <xsl:apply-templates select="@*|node()"/>
+            </xsl:copy>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
  <!--
   FIX nav.xhtml (v2):
   1. Titluri curatate: tokenize pe '#' => pastram doar primul segment (titlul fara autor/subtitlu)
