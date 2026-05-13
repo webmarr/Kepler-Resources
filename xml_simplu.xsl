@@ -263,32 +263,15 @@
  </xsl:template>
 <xsl:template match="img[not(@alt) or normalize-space(@alt) = '']">
 
-        <!-- src -->
-        <xsl:variable name="src" select="string(@src)"/>
+    <xsl:variable name="basename"
+        select="replace(tokenize(@src, '/')[last()], '\.[^.]+$', '')"/>
 
-        <!-- ultimul segment din path -->
-        <xsl:variable name="file"
-            select="tokenize($src, '/')[last()]"/>
+    <xsl:copy>
+        <xsl:copy-of select="@* except @alt"/>
+        <xsl:attribute name="alt" select="$basename"/>
+    </xsl:copy>
 
-        <!-- fara extensie -->
-        <xsl:variable name="basename"
-            select="replace($file, '\.[^.]+$', '')"/>
-
-        <xsl:copy>
-
-            <!-- toate atributele in afara de alt -->
-            <xsl:apply-templates select="@*[name() != 'alt']"/>
-
-            <!-- alt nou -->
-            <xsl:attribute name="alt">
-                <xsl:value-of select="$basename"/>
-            </xsl:attribute>
-
-            <xsl:apply-templates select="node()"/>
-
-        </xsl:copy>
-
-    </xsl:template>
+</xsl:template>
  <xsl:template match="div[@class]">
     <div>
         <!-- pastreaza toate atributele exact cum sunt -->
