@@ -262,7 +262,7 @@
   </xsl:element>
  </xsl:template>
  <xsl:template match="img">
-  <img src="../Images/{@src}.png" alt="{@src}"/>
+  <img src="../Images/{@src}" alt="{@src}"/>
  </xsl:template>
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
