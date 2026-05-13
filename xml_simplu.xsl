@@ -261,9 +261,44 @@
    <xsl:apply-templates/>
   </xsl:element>
  </xsl:template>
- <xsl:template match="img">
-  <img src="../Images/{@src}" alt="{@src}"/>
- </xsl:template>
+<xsl:template match="img[not(@alt) or normalize-space(@alt) = '']">
+
+        <!-- extrage numele fisierului fara extensie -->
+        <xsl:variable name="src" select="@src"/>
+
+        <!-- normalizeaza slash-uri -->
+        <xsl:variable name="normalized-src"
+            select="replace($src, '\\', '/')"/>
+
+        <!-- ia ultimul segment din path -->
+        <xsl:variable name="filename"
+            select="tokenize($normalized-src, '/')[last()]"/>
+
+        <!-- elimina extensia -->
+        <xsl:variable name="basename"
+            select="replace($filename, '\.[^.]+$', '')"/>
+
+        <xsl:copy>
+            <!-- copiaza toate atributele in afara de alt -->
+            <xsl:apply-templates select="@*[name() != 'alt']"/>
+
+            <!-- adauga alt -->
+            <xsl:attribute name="alt">
+                <xsl:value-of select="$basename"/>
+            </xsl:attribute>
+
+            <xsl:apply-templates select="node()"/>
+        </xsl:copy>
+
+    </xsl:template>
+ <xsl:template match="div[@class]">
+    <div>
+        <!-- pastreaza toate atributele exact cum sunt -->
+        <xsl:copy-of select="@*"/>
+
+        <xsl:apply-templates/>
+    </div>
+</xsl:template>
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
    <xsl:matching-substring>
