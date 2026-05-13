@@ -268,10 +268,15 @@
     </xsl:copy>
 </xsl:template>
 
-<xsl:template match="*:img[not(@alt) or normalize-space(@alt)='']">
+<xsl:template match="img">
+    <xsl:copy>
+        <xsl:apply-templates select="@*|node()"/>
+    </xsl:copy>
+</xsl:template>
+
+<xsl:template match="img[not(@alt) or normalize-space(@alt)='']">
     <xsl:copy>
         <xsl:apply-templates select="@*"/>
-        
         <xsl:attribute name="alt">
             <xsl:value-of select="
                 replace(tokenize(@src,'/')[last()],
