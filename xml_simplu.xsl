@@ -261,30 +261,26 @@
    <xsl:apply-templates/>
   </xsl:element>
  </xsl:template>
-<xsl:template match="*:img[not(@alt) or normalize-space(@alt)='']">
 
-    <xsl:variable name="src" select="string(@src)"/>
-
-    <xsl:variable name="file"
-        select="tokenize($src, '/')[last()]"/>
-
-    <xsl:variable name="basename"
-        select="replace($file, '\.[^.]+$', '')"/>
-
+ <xsl:template match="*:div[@class]">
     <xsl:copy>
-        <xsl:copy-of select="@*"/>
-        <xsl:attribute name="alt" select="$basename"/>
+        <xsl:apply-templates select="@*|node()"/>
     </xsl:copy>
-
 </xsl:template>
- <xsl:template match="div[@class]">
-    <div>
-        <!-- pastreaza toate atributele exact cum sunt -->
-        <xsl:copy-of select="@*"/>
 
-        <xsl:apply-templates/>
-    </div>
+<xsl:template match="*:img[not(@alt) or normalize-space(@alt)='']">
+    <xsl:copy>
+        <xsl:apply-templates select="@*"/>
+        
+        <xsl:attribute name="alt">
+            <xsl:value-of select="
+                replace(tokenize(@src,'/')[last()],
+                '\.[^.]+$','')
+            "/>
+        </xsl:attribute>
+    </xsl:copy>
 </xsl:template>
+
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
    <xsl:matching-substring>
