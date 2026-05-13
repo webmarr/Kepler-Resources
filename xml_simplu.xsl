@@ -269,16 +269,7 @@
 
 
 
-<xsl:template match="img">
-    <xsl:copy>
-        <xsl:apply-templates select="@*"/>
-        <xsl:if test="not(@alt) or normalize-space(@alt)=''">
-            <xsl:attribute name="alt"
-                select="replace(tokenize(@src,'/')[last()], '\.[^.]+$', '')"/>
-        </xsl:if>
-        <xsl:apply-templates/>
-    </xsl:copy>
-</xsl:template>
+
 
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
