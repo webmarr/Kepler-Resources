@@ -2,11 +2,6 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs" version="3.0">
- <xsl:template match="node()|@*" name="identity">
-		<xsl:copy>
-			<xsl:apply-templates select="@*|node()"/>
-		</xsl:copy>
-	</xsl:template>
  <!--
   FIX nav.xhtml (v2):
   1. Titluri curatate: tokenize pe '#' => pastram doar primul segment (titlul fara autor/subtitlu)
@@ -266,10 +261,9 @@
    <xsl:apply-templates/>
   </xsl:element>
  </xsl:template>
-
-
-
-
+ <xsl:template match="img">
+  <img src="../Images/{@src}" alt="{@src}"/>
+ </xsl:template>
 
  <xsl:template match="text()[not(ancestor::a)]">
   <xsl:analyze-string select="." regex="(https?://|www\.)[^\s]+">
