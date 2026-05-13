@@ -263,31 +263,29 @@
  </xsl:template>
 <xsl:template match="img[not(@alt) or normalize-space(@alt) = '']">
 
-        <!-- extrage numele fisierului fara extensie -->
-        <xsl:variable name="src" select="@src"/>
+        <!-- src -->
+        <xsl:variable name="src" select="string(@src)"/>
 
-        <!-- normalizeaza slash-uri -->
-        <xsl:variable name="normalized-src"
-            select="replace($src, '\\', '/')"/>
+        <!-- ultimul segment din path -->
+        <xsl:variable name="file"
+            select="tokenize($src, '/')[last()]"/>
 
-        <!-- ia ultimul segment din path -->
-        <xsl:variable name="filename"
-            select="tokenize($normalized-src, '/')[last()]"/>
-
-        <!-- elimina extensia -->
+        <!-- fara extensie -->
         <xsl:variable name="basename"
-            select="replace($filename, '\.[^.]+$', '')"/>
+            select="replace($file, '\.[^.]+$', '')"/>
 
         <xsl:copy>
-            <!-- copiaza toate atributele in afara de alt -->
+
+            <!-- toate atributele in afara de alt -->
             <xsl:apply-templates select="@*[name() != 'alt']"/>
 
-            <!-- adauga alt -->
+            <!-- alt nou -->
             <xsl:attribute name="alt">
                 <xsl:value-of select="$basename"/>
             </xsl:attribute>
 
             <xsl:apply-templates select="node()"/>
+
         </xsl:copy>
 
     </xsl:template>
