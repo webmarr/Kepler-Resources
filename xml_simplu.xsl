@@ -261,13 +261,18 @@
    <xsl:apply-templates/>
   </xsl:element>
  </xsl:template>
-<xsl:template match="img[not(@alt) or normalize-space(@alt) = '']">
+<xsl:template match="*:img[not(@alt) or normalize-space(@alt)='']">
+
+    <xsl:variable name="src" select="string(@src)"/>
+
+    <xsl:variable name="file"
+        select="tokenize($src, '/')[last()]"/>
 
     <xsl:variable name="basename"
-        select="replace(tokenize(@src, '/')[last()], '\.[^.]+$', '')"/>
+        select="replace($file, '\.[^.]+$', '')"/>
 
     <xsl:copy>
-        <xsl:copy-of select="@* except @alt"/>
+        <xsl:copy-of select="@*"/>
         <xsl:attribute name="alt" select="$basename"/>
     </xsl:copy>
 
