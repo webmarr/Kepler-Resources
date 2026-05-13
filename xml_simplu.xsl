@@ -2,6 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs" version="3.0">
+ <xsl:mode on-no-match="shallow-copy"/>
  <!--
   FIX nav.xhtml (v2):
   1. Titluri curatate: tokenize pe '#' => pastram doar primul segment (titlul fara autor/subtitlu)
@@ -262,27 +263,21 @@
   </xsl:element>
  </xsl:template>
 
- <xsl:template match="*:div[@class]">
+<xsl:template match="*:div[@class]">
     <xsl:copy>
-        <xsl:apply-templates select="@*|node()"/>
+        <xsl:apply-templates select="@*"/>
+        <xsl:apply-templates select="node()"/>
     </xsl:copy>
 </xsl:template>
 
 <xsl:template match="img">
     <xsl:copy>
-        <xsl:apply-templates select="@*|node()"/>
-    </xsl:copy>
-</xsl:template>
-
-<xsl:template match="img[not(@alt) or normalize-space(@alt)='']">
-    <xsl:copy>
         <xsl:apply-templates select="@*"/>
-        <xsl:attribute name="alt">
-            <xsl:value-of select="
-                replace(tokenize(@src,'/')[last()],
-                '\.[^.]+$','')
-            "/>
-        </xsl:attribute>
+        <xsl:if test="not(@alt) or normalize-space(@alt)=''">
+            <xsl:attribute name="alt"
+                select="replace(tokenize(@src,'/')[last()], '\.[^.]+$', '')"/>
+        </xsl:if>
+        <xsl:apply-templates/>
     </xsl:copy>
 </xsl:template>
 
