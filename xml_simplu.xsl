@@ -23,13 +23,19 @@
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
  <xsl:key name="ancore" match="*" use="@id"/>
 
+ <xsl:key name="pozitie-capitol" match="livre/corps/*" use="descendant-or-self::*/@id"/>
+
  <xsl:template match="/">
   
   <xsl:variable name="groupInfo">
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
      pos="{format-number(position(), '00')}"
-     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}"/>
+     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}">
+      <xsl:for-each select="current-group()//@id">
+        <id value="{current()}"/>
+      </xsl:for-each>
+    </group>
    </xsl:for-each-group>
   </xsl:variable>
   
@@ -109,25 +115,30 @@
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
    <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
-   
-   <xsl:variable name="current-pos" select="$pos"/>
-   <xsl:variable name="current-tip" select="if ($is-front) then 'intro' else 'chapitre'"/>
-   
    <xsl:result-document href="{$file-name}" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
     <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
     <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
      lang="fr-FR" xml:lang="fr-FR">
      <head>
-      </head>
+      <meta charset="UTF-8"/>
+      <title>
+       <xsl:choose>
+        <xsl:when test="not($is-front)">
+         <xsl:variable name="rawTitle">
+          <xsl:apply-templates select="." mode="getText"/>
+         </xsl:variable>
+         <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
+         <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
+        </xsl:when>
+        <xsl:otherwise>Introduction</xsl:otherwise>
+       </xsl:choose>
+      </title>
+      <link href="../Styles/styles.css" rel="stylesheet" type="text/css"/>
+     </head>
      <body epub:type="{if ($is-front) then 'frontmatter' else 'bodymatter'}">
       <section epub:type="{if ($is-front) then 'introduction' else 'chapter'}"
        role="{if ($is-front) then 'doc-introduction' else 'doc-chapter'}">
-       
-       <xsl:apply-templates select="current-group()">
-         <xsl:with-param name="grup-pos" select="$current-pos" tunnel="yes"/>
-         <xsl:with-param name="grup-tip" select="$current-tip" tunnel="yes"/>
-       </xsl:apply-templates>
-       
+       <xsl:apply-templates select="current-group()"/>
        <section class="footnotes" epub:type="footnotes">
         <xsl:variable name="citedNoteIDs" select="current-group()//a[span[@class='apnb']]/substring-after(@href, 'N')"/>
         <xsl:apply-templates select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
@@ -300,15 +311,22 @@
  </xsl:template>
 
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
-  <xsl:param name="grup-pos" tunnel="yes"/>
-  <xsl:param name="grup-tip" tunnel="yes"/>
-  
   <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
+  <xsl:variable name="potrivire-grup" select="$groupInfo/group[id/@value = $id-tinta]"/>
   
-  <xsl:variable name="file-name" select="concat('chap_', $grup-pos, '_', $grup-tip, '.xhtml')"/>
-  
-  <a href="{$file-name}#{$id-tinta}">
-   <xsl:value-of select="."/>
-  </a>
+  <xsl:choose>
+   <xsl:when test="exists($potrivire-grup)">
+    <xsl:variable name="pos" select="$potrivire-grup/@pos"/>
+    <xsl:variable name="tip-fisier" select="if ($potrivire-grup/@is-front = 'true') then 'intro' else 'chapitre'"/>
+    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
+    
+    <a href="{$file-name}#{$id-tinta}">
+     <xsl:value-of select="."/>
+    </a>
+   </xsl:when>
+   <xsl:otherwise>
+    <xsl:value-of select="."/>
+   </xsl:otherwise>
+  </xsl:choose>
  </xsl:template>
 </xsl:stylesheet>
