@@ -28,7 +28,11 @@
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
      pos="{format-number(position(), '00')}"
-     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}"/>
+     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}">
+      <xsl:for-each select="current-group()//@id">
+        <id value="{.}"/>
+      </xsl:for-each>
+    </group>
    </xsl:for-each-group>
   </xsl:variable>
   
@@ -304,27 +308,13 @@
  </xsl:template>
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
   <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
-  <xsl:variable name="element-tinta" select="key('ancore', $id-tinta)[1]"/>
+  
+  <xsl:variable name="potrivire-grup" select="$groupInfo/group[id/@value = $id-tinta]"/>
   
   <xsl:choose>
-   <xsl:when test="$element-tinta">
-    <xsl:variable name="nod-prim-nivel" select="$element-tinta/ancestor-or-self::*[parent::corps][1]"/>
-    
-    <xsl:variable name="element-declansator" select="if ($nod-prim-nivel[self::h1 or self::Journal or self::h2[@class='nchap']]) 
-                                                     then $nod-prim-nivel 
-                                                     else $nod-prim-nivel/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']][1]"/>
-    
-    <xsl:variable name="numar-capitol">
-     <xsl:choose>
-      <xsl:when test="exists($element-declansator)">
-       <xsl:value-of select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
-      </xsl:when>
-      <xsl:otherwise>1</xsl:otherwise>
-     </xsl:choose>
-    </xsl:variable>
-    
-    <xsl:variable name="pos" select="format-number(xs:integer($numar-capitol), '00')"/>
-    <xsl:variable name="tip-fisier" select="if (exists($element-declansator)) then 'chapitre' else 'intro'"/>
+   <xsl:when test="exists($potrivire-grup)">
+    <xsl:variable name="pos" select="$potrivire-grup/@pos"/>
+    <xsl:variable name="tip-fisier" select="if ($potrivire-grup/@is-front = 'true') then 'intro' else 'chapitre'"/>
     <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
     
     <a href="{$file-name}#{$id-tinta}">
