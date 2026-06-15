@@ -22,12 +22,7 @@
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
  <xsl:key name="ancore" match="*" use="@id"/>
-
- <xsl:key name="pozitie-capitol" match="livre/corps/*" use="descendant-or-self::*/@id"/>
-
- <xsl:template match="/">
-  
-  <xsl:variable name="groupInfo">
+<xsl:variable name="groupInfo">
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
      pos="{format-number(position(), '00')}"
@@ -38,6 +33,11 @@
     </group>
    </xsl:for-each-group>
   </xsl:variable>
+ <xsl:key name="pozitie-capitol" match="livre/corps/*" use="descendant-or-self::*/@id"/>
+
+ <xsl:template match="/">
+  
+  
   
   <xsl:result-document href="nav.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
    <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
