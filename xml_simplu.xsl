@@ -109,30 +109,25 @@
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
    <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
+   
+   <xsl:variable name="current-pos" select="$pos"/>
+   <xsl:variable name="current-tip" select="if ($is-front) then 'intro' else 'chapitre'"/>
+   
    <xsl:result-document href="{$file-name}" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
     <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
     <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
      lang="fr-FR" xml:lang="fr-FR">
      <head>
-      <meta charset="UTF-8"/>
-      <title>
-       <xsl:choose>
-        <xsl:when test="not($is-front)">
-         <xsl:variable name="rawTitle">
-          <xsl:apply-templates select="." mode="getText"/>
-         </xsl:variable>
-         <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
-         <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
-        </xsl:when>
-        <xsl:otherwise>Introduction</xsl:otherwise>
-       </xsl:choose>
-      </title>
-      <link href="../Styles/styles.css" rel="stylesheet" type="text/css"/>
-     </head>
+      </head>
      <body epub:type="{if ($is-front) then 'frontmatter' else 'bodymatter'}">
       <section epub:type="{if ($is-front) then 'introduction' else 'chapter'}"
        role="{if ($is-front) then 'doc-introduction' else 'doc-chapter'}">
-       <xsl:apply-templates select="current-group()"/>
+       
+       <xsl:apply-templates select="current-group()">
+         <xsl:with-param name="grup-pos" select="$current-pos" tunnel="yes"/>
+         <xsl:with-param name="grup-tip" select="$current-tip" tunnel="yes"/>
+       </xsl:apply-templates>
+       
        <section class="footnotes" epub:type="footnotes">
         <xsl:variable name="citedNoteIDs" select="current-group()//a[span[@class='apnb']]/substring-after(@href, 'N')"/>
         <xsl:apply-templates select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
@@ -305,35 +300,15 @@
  </xsl:template>
 
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
-  <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
-  <xsl:variable name="nod-tinta" select="//*[@id = $id-tinta][1]"/>
+  <xsl:param name="grup-pos" tunnel="yes"/>
+  <xsl:param name="grup-tip" tunnel="yes"/>
   
-  <xsl:choose>
-   <xsl:when test="exists($nod-tinta)">
-    <xsl:variable name="nod-prim-nivel" select="$nod-tinta/ancestor-or-self::*[parent::corps][1]"/>
-    <xsl:variable name="element-declansator" select="if ($nod-prim-nivel[self::h1 or self::Journal or self::h2[@class='nchap']]) 
-                                                     then $nod-prim-nivel 
-                                                     else $nod-prim-nivel/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']][1]"/>
-    <xsl:variable name="numar-capitol">
-     <xsl:choose>
-      <xsl:when test="exists($element-declansator)">
-       <xsl:value-of select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 2"/>
-      </xsl:when>
-      <xsl:otherwise>1</xsl:otherwise>
-     </xsl:choose>
-    </xsl:variable>
-    
-    <xsl:variable name="pos" select="format-number(xs:integer($numar-capitol), '00')"/>
-    <xsl:variable name="tip-fisier" select="if (exists($element-declansator)) then 'chapitre' else 'intro'"/>
-    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
-    
-    <a href="{$file-name}#{$id-tinta}">
-     <xsl:value-of select="."/>
-    </a>
-   </xsl:when>
-   <xsl:otherwise>
-    <xsl:value-of select="."/>
-   </xsl:otherwise>
-  </xsl:choose>
+  <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
+  
+  <xsl:variable name="file-name" select="concat('chap_', $grup-pos, '_', $grup-tip, '.xhtml')"/>
+  
+  <a href="{$file-name}#{$id-tinta}">
+   <xsl:value-of select="."/>
+  </a>
  </xsl:template>
 </xsl:stylesheet>
