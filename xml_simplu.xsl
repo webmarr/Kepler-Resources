@@ -22,6 +22,8 @@
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
  
+ <xsl:key name="elementsById" match="livre/corps//*" use="@id"/>
+ 
  <xsl:template match="/">
   
   <xsl:variable name="groupInfo">
@@ -146,6 +148,38 @@
 
  <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']]]]"/>
 
+ <xsl:template match="*[starts-with(local-name(), 'renv')]">
+  <xsl:variable name="targetId" select="substring-after(local-name(), 'renv')"/>
+  <xsl:variable name="targetNode" select="key('elementsById', $targetId, doc('/'))"/>
+  
+  <xsl:choose>
+   <xsl:when test="exists($targetNode)">
+    <xsl:variable name="targetGroupStart" select="$targetNode/ancestor-or-self::livre/corps/*[self::h1 or self::Journal or self::h2[@class='nchap'] or not(prev-sibling::*)][.  &lt;&lt;= $targetNode or . is $targetNode][last()]"/>
+    
+    <xsl:variable name="groupIndex">
+     <xsl:for-each select="doc('/')/livre/corps/*[self::h1 or self::Journal or self::h2[@class='nchap'] or not(preceding-sibling::*)]">
+      <xsl:if test=". is $targetGroupStart">
+       <xsl:value-of select="position()"/>
+      </xsl:if>
+     </xsl:for-each>
+    </xsl:variable>
+
+    <xsl:variable name="pos" select="format-number(number($groupIndex), '00')"/>
+    <xsl:variable name="is-front" select="not($targetGroupStart/self::h1 or $targetGroupStart/self::Journal or $targetGroupStart/self::h2[@class='nchap'])"/>
+    <xsl:variable name="target-file" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
+    
+    <a href="{$target-file}#{$targetId}">
+     <xsl:apply-templates/>
+    </a>
+   </xsl:when>
+   <xsl:otherwise>
+    <a href="#{$targetId}">
+     <xsl:apply-templates/>
+    </a>
+   </xsl:otherwise>
+  </xsl:choose>
+ </xsl:template>
+
  <xsl:template match="a[span[@class='apnb']]">
   <xsl:variable name="n" select="replace(@href, '\D', '')"/> 
   <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="#footnote-{$n}" id="AN{$n}">
@@ -153,7 +187,7 @@
     <span class="note">
      <xsl:value-of select="$n"/>
     </span>
-   </sup>
+   </td>
   </a>
  </xsl:template>
 
