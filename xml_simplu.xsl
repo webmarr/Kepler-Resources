@@ -22,7 +22,7 @@
  <xsl:variable name="existaNchap" select="exists(//*:h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//*:defnotes/*:p[@class='ntb']"/>
  
- <xsl:key name="elementsById" match="*:livre/*:corps//*" use="string(@id)"/>
+ <xsl:key name="elementsById" match="//*[exists(@id)]" use="string(@id)"/>
  
  <xsl:template match="/">
   
@@ -75,7 +75,7 @@
         <li><a epub:type="frontmatter" href="chap_{@pos}_intro.xhtml">D&#233;but</a></li>
        </xsl:for-each>
        <xsl:for-each select="$groupInfo/*[@is-front='false'][1]">
-        <li><a epub:type="body_matter" href="chap_{@pos}_chapitre.xhtml">Contenu principal</a></li>
+        <li><a epub:type="bodymatter" href="chap_{@pos}_chapitre.xhtml">Contenu principal</a></li>
        </xsl:for-each>
        <li><a epub:type="toc" href="nav.xhtml#toc">Table des mati&#232;res</a></li>
       </ol>
@@ -148,19 +148,20 @@
 
  <xsl:template match="*:a[@id and not(node()) and following-sibling::node()[1][self::*:a[*:span[@class='apnb']]]]"/>
 
- <xsl:template match="*[starts-with(local-name(), 'renv')]">
+ <xsl:template match="*[starts-with(local-name(), 'renv')]" priority="20">
   <xsl:variable name="targetId" select="substring-after(local-name(), 'renv')"/>
   <xsl:variable name="targetNode" select="key('elementsById', $targetId, doc('/'))[1]"/>
   
   <xsl:choose>
    <xsl:when test="$targetNode">
-    <xsl:variable name="ancestorInCorps" select="$targetNode/ancestor-or-self::*:corps/*[.//* is $targetNode or . is $targetNode][1]"/>
+    <xsl:variable name="parentInCorps" select="$targetNode/ancestor-or-self::*:corps/*[count(. | $targetNode/ancestor-or-self::*) = count($targetNode/ancestor-or-self::*)]"/>
+    <xsl:variable name="headingsBefore" select="count($parentInCorps/preceding-sibling::*[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']])"/>
+    <xsl:variable name="has_headings" select="exists($parentInCorps/preceding-sibling::*[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']]) or $parentInCorps[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']]"/>
     
-    <xsl:variable name="groupIndex" select="count($ancestorInCorps/preceding-sibling::*[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']]) + 1"/>
-    <xsl:variable name="has_preceding_headings" select="exists($ancestorInCorps/preceding-sibling::*[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']]) or $ancestorInCorps[self::*:h1 or self::*:Journal or self::*:h2[@class='nchap']]"/>
+    <xsl:variable name="groupIndex" select="$headingsBefore + 1"/>
+    <xsl:variable name="is-front" select="not($has_headings)"/>
     
     <xsl:variable name="pos" select="format-number($groupIndex, '00')"/>
-    <xsl:variable name="is-front" select="not($has_preceding_headings)"/>
     <xsl:variable name="target-file" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
     
     <a href="{$target-file}#{$targetId}">
