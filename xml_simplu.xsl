@@ -36,15 +36,7 @@
  <xsl:key name="pozitie-capitol" match="livre/corps/*" use="descendant-or-self::*/@id"/>
 
  <xsl:template match="/">
-  <xsl:for-each select="$groupInfo/*:group">
-    <xsl:variable name="pos" select="@pos"/>
-    <xsl:for-each select="*:id/@value">
-      <xsl:variable name="val" select="."/>
-      <xsl:if test="count($groupInfo/*:group[*:id/@value = $val]) gt 1">
-        <xsl:message>ID DUPLICAT: <xsl:value-of select="$val"/> in grupurile: <xsl:value-of select="string-join($groupInfo/*:group[*:id/@value = $val]/@pos, ', ')"/></xsl:message>
-      </xsl:if>
-    </xsl:for-each>
-  </xsl:for-each>
+  
   
   
   <xsl:result-document href="nav.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
@@ -321,7 +313,10 @@
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
   <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
   <xsl:variable name="potrivire-grup" select="$groupInfo/Q{}group[Q{}id/@value = $id-tinta]"/>
-  
+   <xsl:variable name="matches" select="$groupInfo/*:group[*:id/@value = $id-tinta]"/>
+  <xsl:if test="count($matches) gt 1">
+    <xsl:message terminate="yes">ID DUPLICAT: "<xsl:value-of select="$id-tinta"/>" gasit in grupurile: <xsl:value-of select="string-join($matches/@pos, ', ')"/></xsl:message>
+  </xsl:if>
   <xsl:choose>
    <xsl:when test="exists($potrivire-grup)">
     <xsl:variable name="pos" select="$potrivire-grup/@pos"/>
