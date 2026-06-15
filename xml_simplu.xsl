@@ -304,19 +304,27 @@
  </xsl:template>
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
   <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
-  <xsl:variable name="element-tinta" select="key('ancore', $id-tinta)"/>
+  <xsl:variable name="element-tinta" select="key('ancore', $id-tinta)[1]"/>
   
   <xsl:choose>
    <xsl:when test="$element-tinta">
-    <xsl:variable name="nod-start-capitol" select="$element-tinta/ancestor-or-self::*[parent::corps]"/>
+    <xsl:variable name="nod-prim-nivel" select="$element-tinta/ancestor-or-self::*[parent::corps][1]"/>
     
-    <xsl:variable name="element-declansator" select="$nod-start-capitol/self::*[self::h1 or self::Journal or self::h2[@class='nchap']] | $nod-start-capitol/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']][1]"/>
+    <xsl:variable name="element-declansator" select="if ($nod-prim-nivel[self::h1 or self::Journal or self::h2[@class='nchap']]) 
+                                                     then $nod-prim-nivel 
+                                                     else $nod-prim-nivel/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']][1]"/>
     
-    <xsl:variable name="numar-capitol" select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
-    <xsl:variable name="pos" select="format-number($numar-capitol, '00')"/>
+    <xsl:variable name="numar-capitol">
+     <xsl:choose>
+      <xsl:when test="exists($element-declansator)">
+       <xsl:value-of select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
+      </xsl:when>
+      <xsl:otherwise>1</xsl:otherwise>
+     </xsl:choose>
+    </xsl:variable>
     
+    <xsl:variable name="pos" select="format-number(xs:integer($numar-capitol), '00')"/>
     <xsl:variable name="tip-fisier" select="if (exists($element-declansator)) then 'chapitre' else 'intro'"/>
-    
     <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
     
     <a href="{$file-name}#{$id-tinta}">
