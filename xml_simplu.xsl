@@ -312,7 +312,7 @@
 
  <xsl:template match="*[starts-with(local-name(), 'renv')]">
   <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
-  <xsl:variable name="potrivire-grup" select="$groupInfo/group[id/@value = $id-tinta]"/>
+  <xsl:variable name="potrivire-grup" select="$groupInfo/*:group[*:id/@value = $id-tinta]"/>
   
   <xsl:choose>
    <xsl:when test="exists($potrivire-grup)">
