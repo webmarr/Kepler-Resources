@@ -317,7 +317,7 @@
     <xsl:variable name="numar-capitol">
      <xsl:choose>
       <xsl:when test="exists($element-declansator)">
-       <xsl:value-of select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
+       <xsl:value-of select="count($element-declansator/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 2"/>
       </xsl:when>
       <xsl:otherwise>1</xsl:otherwise>
      </xsl:choose>
