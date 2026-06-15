@@ -21,7 +21,7 @@
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
- 
+ <xsl:key name="ancore" match="*" use="@id"/>
  <xsl:template match="/">
   
   <xsl:variable name="groupInfo">
@@ -301,5 +301,60 @@
     <xsl:value-of select="."/>
    </xsl:non-matching-substring>
   </xsl:analyze-string>
+ </xsl:template>
+ <xsl:template match="*[starts-with(local-name(), 'renv')]">
+  <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
+  <xsl:variable name="element-tinta" select="key('ancore', $id-tinta)"/>
+  
+  <xsl:choose>
+   <xsl:when test="$element-tinta">
+    
+    <xsl:variable name="nod-start-capitol" select="$element-tinta/ancestor-or-self::*[parent::corps][1]"/>
+    
+    <xsl:variable name="numar-capitol" select="count($nod-start-capitol/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
+    <xsl:variable name="pos" select="format-number($numar-capitol, '00')"/>
+    
+    <xsl:variable name="is-front" select="not($nod-start-capitol[self::h1 or self::Journal or self::h2[@class='nchap']])"/>
+    <xsl:variable name="tip-fisier" select="if ($is-front) then 'intro' else 'chapitre'"/>
+    
+    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
+    
+    <a href="{$file-name}#{$id-tinta}">
+     <xsl:value-of select="."/>
+    </a>
+   </xsl:when>
+   
+   <xsl:otherwise>
+    <xsl:value-of select="."/>
+   </xsl:otherwise>
+  </xsl:choose>
+  
+ </xsl:template>
+ <xsl:template match="*[starts-with(local-name(), 'renv')]">
+  <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
+  <xsl:variable name="element-tinta" select="key('ancore', $id-tinta)"/>
+  
+  <xsl:choose>
+   <xsl:when test="$element-tinta">
+    
+    <xsl:variable name="nod-start-capitol" select="$element-tinta/ancestor-or-self::*[parent::corps][1]"/>
+    
+    <xsl:variable name="numar-capitol" select="count($nod-start-capitol/preceding-sibling::*[self::h1 or self::Journal or self::h2[@class='nchap']]) + 1"/>
+    <xsl:variable name="pos" select="format-number($numar-capitol, '00')"/>
+    
+    <xsl:variable name="is-front" select="not($nod-start-capitol[self::h1 or self::Journal or self::h2[@class='nchap']])"/>
+    <xsl:variable name="tip-fisier" select="if ($is-front) then 'intro' else 'chapitre'"/>
+    
+    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
+    
+    <a href="{$file-name}#{$id-tinta}">
+     <xsl:value-of select="."/>
+    </a>
+   </xsl:when>
+   
+   <xsl:otherwise>
+    <xsl:value-of select="."/>
+   </xsl:otherwise>
+  </xsl:choose>
  </xsl:template>
 </xsl:stylesheet>
