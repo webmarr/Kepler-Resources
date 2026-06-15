@@ -21,23 +21,16 @@
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
- <xsl:key name="ancore" match="*" use="@id"/>
-<xsl:variable name="groupInfo">
+ 
+ <xsl:template match="/">
+  
+  <xsl:variable name="groupInfo">
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
      pos="{format-number(position(), '00')}"
-     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}">
-      <xsl:for-each select="current-group()//@id">
-        <id value="{current()}"/>
-      </xsl:for-each>
-    </group>
+     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}"/>
    </xsl:for-each-group>
   </xsl:variable>
- <xsl:key name="pozitie-capitol" match="livre/corps/*" use="descendant-or-self::*/@id"/>
-
- <xsl:template match="/">
-  
-  
   
   <xsl:result-document href="nav.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
    <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
@@ -308,28 +301,5 @@
     <xsl:value-of select="."/>
    </xsl:non-matching-substring>
   </xsl:analyze-string>
- </xsl:template>
-
- <xsl:template match="*[starts-with(local-name(), 'renv')]">
-  <xsl:variable name="id-tinta" select="substring-after(local-name(), 'renv')"/>
-  <xsl:variable name="potrivire-grup" select="$groupInfo/Q{}group[Q{}id/@value = $id-tinta]"/>
-   <xsl:variable name="matches" select="$groupInfo/*:group[*:id/@value = $id-tinta]"/>
-  <xsl:if test="count($matches) gt 1">
-    <xsl:message terminate="yes">ID DUPLICAT: "<xsl:value-of select="$id-tinta"/>" gasit in grupurile: <xsl:value-of select="string-join($matches/@pos, ', ')"/></xsl:message>
-  </xsl:if>
-  <xsl:choose>
-   <xsl:when test="exists($potrivire-grup)">
-    <xsl:variable name="pos" select="$potrivire-grup/@pos"/>
-    <xsl:variable name="tip-fisier" select="if ($potrivire-grup/@is-front = 'true') then 'intro' else 'chapitre'"/>
-    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', $tip-fisier, '.xhtml')"/>
-    
-    <a href="{$file-name}#{$id-tinta}">
-     <xsl:value-of select="."/>
-    </a>
-   </xsl:when>
-   <xsl:otherwise>
-    <xsl:value-of select="."/>
-   </xsl:otherwise>
-  </xsl:choose>
  </xsl:template>
 </xsl:stylesheet>
