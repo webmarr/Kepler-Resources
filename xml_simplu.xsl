@@ -24,13 +24,13 @@
  <xsl:key name="ancore" match="*" use="@id"/>
  <xsl:template match="/">
   
-  <xsl:variable name="groupInfo">
+<xsl:variable name="groupInfo">
    <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
     <group
      pos="{format-number(position(), '00')}"
      is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}">
       <xsl:for-each select="current-group()//@id">
-        <id value="{.}"/>
+        <id value="{current()}"/>
       </xsl:for-each>
     </group>
    </xsl:for-each-group>
