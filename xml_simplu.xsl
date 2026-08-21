@@ -21,7 +21,18 @@
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
+ <xsl:variable name="pageToFile">
+  <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+   <xsl:variable name="pos" select="format-number(position(), '00')"/>
+   <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
+   <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
+   <xsl:for-each select="current-group()//RP">
+    <page num="{@page}" file="{$file-name}"/>
+   </xsl:for-each>
+  </xsl:for-each-group>
+ </xsl:variable>
  
+ <xsl:key name="page-file-key" match="page" use="@num"/>
  <xsl:template match="/">
   
   <xsl:variable name="groupInfo">
@@ -143,7 +154,14 @@
   </xsl:for-each-group>
 
  </xsl:template>
-
+ <xsl:template match="a[starts-with(@href,'#page')]">
+  <xsl:variable name="pageNum" select="substring-after(@href,'#page')"/>
+  <xsl:variable name="targetFile" select="key('page-file-key', $pageNum, $pageToFile)/@file"/>
+  <a>
+   <xsl:attribute name="href" select="if ($targetFile != '') then concat($targetFile, '#page', $pageNum) else @href"/>
+   <xsl:apply-templates select="@*[not(local-name()='href')]|node()"/>
+  </a>
+ </xsl:template>
  <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']]]]"/>
 
  <xsl:template match="a[span[@class='apnb']]">
