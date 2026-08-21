@@ -200,14 +200,18 @@
  </xsl:template>
 
  <xsl:template match="span">
-  <span>
-   <xsl:if test="@class">
-    <xsl:attribute name="class" select="@class"/>
-   </xsl:if>
-   <xsl:apply-templates/>
-  </span>
+  <xsl:choose>
+   <xsl:when test="@class">
+    <span>
+     <xsl:attribute name="class" select="@class"/>
+     <xsl:apply-templates/>
+    </span>
+   </xsl:when>
+   <xsl:otherwise>
+    <xsl:apply-templates/>
+   </xsl:otherwise>
+  </xsl:choose>
  </xsl:template>
-
  <xsl:template match="br">
   <br/>
  </xsl:template>
