@@ -27,7 +27,7 @@
 
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
- <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
+ <xsl:variable name="allNotes" select="//div[@class='defnotes']/div[@class='ntb']"/>
 
  <!-- ==========================================================
       FIX 1: grupare corectă chiar și când h1/Journal/h2.nchap
@@ -207,7 +207,7 @@
         current-group()//a[span[@class='apnb']]/substring-after(@href, 'N'),
         current-group()//span[@class='apnb'][not(parent::a)]/a[1]/substring-after(@href, 'N')
         )"/>
-       <xsl:variable name="chapterNotes" select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
+       <xsl:variable name="chapterNotes" select="//div[@class='defnotes']/div[@class='ntb'][substring-after(p/a[1]/@id, 'N') = $citedNoteIDs]"/>
        <xsl:if test="exists($chapterNotes)">
         <section class="notes-chapitre">
          <h2><xsl:value-of select="$chapter-title"/></h2>
@@ -286,14 +286,24 @@
   </a>
  </xsl:template>
 
- <xsl:template match="p[@class='ntb']">
+ <xsl:template match="div[@class='ntb']">
   <xsl:param name="back-file" select="''"/>
-  <xsl:variable name="n" select="replace(a[1]/@id, '\D', '')"/>
+  <xsl:variable name="n" select="replace(p/a[1]/@id, '\D', '')"/>
+  <xsl:variable name="restNodes" select="p/node()[not(self::a)]"/>
   <aside id="footnote-{$n}" epub:type="footnote" role="doc-footnote">
    <p class="footnote-text">
     <a href="{if ($back-file != '') then concat($back-file, '#AN', $n) else concat('#AN', $n)}"><xsl:value-of select="$n"/>.</a>
     <xsl:text>&#160;</xsl:text>
-    <xsl:apply-templates select="node()[not(self::a)]"/>
+    <xsl:for-each select="$restNodes">
+     <xsl:choose>
+      <xsl:when test="position()=1 and self::text()">
+       <xsl:value-of select="replace(., '^\)(&#160;|\s)*', '')"/>
+      </xsl:when>
+      <xsl:otherwise>
+       <xsl:apply-templates select="."/>
+      </xsl:otherwise>
+     </xsl:choose>
+    </xsl:for-each>
    </p>
   </aside>
  </xsl:template>
