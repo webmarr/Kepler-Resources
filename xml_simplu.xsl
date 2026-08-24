@@ -3,8 +3,13 @@
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns:local="urn:local-functions"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs local" version="3.0">
+
+ <!-- Parametri pentru cover.xhtml — pot fi suprascriși la invocarea transformării
+      (ex. saxon ... cover-title="Droit maritime" cover-alt="Couverture: ..."),
+      fără a modifica stylesheet-ul pentru fiecare carte. -->
  <xsl:param name="cover-title" select="'Droit maritime'"/>
  <xsl:param name="cover-alt" select="concat('Couverture: ', $cover-title)"/>
+
  <xsl:template match="node()|@*" name="identity">
   <xsl:choose>
    <xsl:when test="self::*">
@@ -147,7 +152,7 @@
     </body>
    </html>
   </xsl:result-document>
-  
+
   <xsl:result-document href="cover.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
    <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
@@ -168,7 +173,55 @@
     </body>
    </html>
   </xsl:result-document>
-  
+
+  <xsl:result-document href="notes.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
+   <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
+   <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
+    lang="fr-FR" xml:lang="fr-FR">
+    <head>
+     <meta charset="UTF-8"/>
+     <title>Notes</title>
+     <link href="../Styles/styles.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body epub:type="backmatter">
+     <section epub:type="endnotes" role="doc-endnotes">
+      <h1>Notes</h1>
+      <xsl:for-each-group select="livre/corps/*"
+       group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
+       <xsl:variable name="pos" select="format-number(position(), '00')"/>
+       <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
+       <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
+       <xsl:variable name="chapter-title">
+        <xsl:choose>
+         <xsl:when test="$is-front">Introduction</xsl:when>
+         <xsl:otherwise>
+          <xsl:variable name="rawTitle">
+           <xsl:apply-templates select="local:heading-node(.)" mode="getText"/>
+          </xsl:variable>
+          <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
+          <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
+         </xsl:otherwise>
+        </xsl:choose>
+       </xsl:variable>
+       <xsl:variable name="citedNoteIDs" select="(
+        current-group()//a[span[@class='apnb']]/substring-after(@href, 'N'),
+        current-group()//span[@class='apnb'][not(parent::a)]/a[1]/substring-after(@href, 'N')
+        )"/>
+       <xsl:variable name="chapterNotes" select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
+       <xsl:if test="exists($chapterNotes)">
+        <section class="notes-chapitre">
+         <h2><xsl:value-of select="$chapter-title"/></h2>
+         <xsl:apply-templates select="$chapterNotes">
+          <xsl:with-param name="back-file" select="$file-name" tunnel="no"/>
+         </xsl:apply-templates>
+        </section>
+       </xsl:if>
+      </xsl:for-each-group>
+     </section>
+    </body>
+   </html>
+  </xsl:result-document>
+
   <xsl:for-each-group select="livre/corps/*"
    group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
@@ -198,10 +251,6 @@
       <section epub:type="{if ($is-front) then 'introduction' else 'chapter'}"
        role="{if ($is-front) then 'doc-introduction' else 'doc-chapter'}">
        <xsl:apply-templates select="current-group()"/>
-       <section class="footnotes" epub:type="footnotes">
-        <xsl:variable name="citedNoteIDs" select="current-group()//a[span[@class='apnb']]/substring-after(@href, 'N')"/>
-        <xsl:apply-templates select="//defnotes/p[@class='ntb'][substring-after(a[1]/@id, 'N') = $citedNoteIDs]"/>
-       </section>
       </section>
      </body>
     </html>
@@ -210,11 +259,25 @@
 
  </xsl:template>
 
- <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']]]]"/>
+ <!-- forma 1: <a href="#Nx"><span class="apnb">n</span></a>, precedat de <a id="ANx"/> gol -->
+ <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']] or self::span[@class='apnb']]]"/>
 
  <xsl:template match="a[span[@class='apnb']]">
   <xsl:variable name="n" select="replace(@href, '\D', '')"/> 
-  <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="#footnote-{$n}" id="AN{$n}">
+  <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="notes.xhtml#footnote-{$n}" id="AN{$n}">
+   <sup>
+    <span class="note">
+     <xsl:value-of select="$n"/>
+    </span>
+   </sup>
+  </a>
+ </xsl:template>
+
+ <!-- forma 2: <a id="ANx"/><span class="apnb">(<a href="#Nx">n</a>)</span> — span-ul e soră cu
+      ancora goală, nu conținută de un <a>; numărul se ia din a[1]/@href din interiorul span-ului -->
+ <xsl:template match="span[@class='apnb'][not(parent::a)]">
+  <xsl:variable name="n" select="replace(a[1]/@href, '\D', '')"/>
+  <a class="_idFootnoteLink antsp" epub:type="noteref" role="doc-noteref" href="notes.xhtml#footnote-{$n}" id="AN{$n}">
    <sup>
     <span class="note">
      <xsl:value-of select="$n"/>
@@ -224,10 +287,11 @@
  </xsl:template>
 
  <xsl:template match="p[@class='ntb']">
+  <xsl:param name="back-file" select="''"/>
   <xsl:variable name="n" select="replace(a[1]/@id, '\D', '')"/>
   <aside id="footnote-{$n}" epub:type="footnote" role="doc-footnote">
    <p class="footnote-text">
-    <a href="#AN{$n}"><xsl:value-of select="$n"/>.</a>
+    <a href="{if ($back-file != '') then concat($back-file, '#AN', $n) else concat('#AN', $n)}"><xsl:value-of select="$n"/>.</a>
     <xsl:text>&#160;</xsl:text>
     <xsl:apply-templates select="node()[not(self::a)]"/>
    </p>
