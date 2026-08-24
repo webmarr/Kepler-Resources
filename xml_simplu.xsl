@@ -146,7 +146,28 @@
     </body>
    </html>
   </xsl:result-document>
-
+  
+  <xsl:result-document href="cover.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
+   <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
+   <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+     <meta http-equiv="default-style" content="text/html; charset=utf-8"/>
+     <title><xsl:value-of select="$cover-title"/></title>
+     <link href="../Styles/magnard_vuibert_couverture.css" rel="stylesheet" type="text/css"/>
+    </head>
+    <body epub:type="cover">
+     <section epub:type="cover">
+      <h1 class="noprint">Couverture</h1>
+      <div class="couverture">
+       <a id="cover">
+        <img alt="{$cover-alt}" class="img" src="../Images/cover.jpg"/>
+       </a>
+      </div>
+     </section>
+    </body>
+   </html>
+  </xsl:result-document>
+  
   <xsl:for-each-group select="livre/corps/*"
    group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
