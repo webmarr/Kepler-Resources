@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
- xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs" version="3.0">
+ xmlns:local="urn:local-functions"
+ xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs local" version="3.0">
 
  <xsl:template match="node()|@*" name="identity">
   <xsl:choose>
@@ -21,28 +22,57 @@
  <xsl:output method="xhtml" indent="yes" encoding="UTF-8" include-content-type="no"/>
  <xsl:variable name="existaNchap" select="exists(//h2[@class='nchap'])"/>
  <xsl:variable name="allNotes" select="//defnotes/p[@class='ntb']"/>
+
+ <!-- ==========================================================
+      FIX 1: grupare corectă chiar și când h1/Journal/h2.nchap
+      sunt îngropate într-un div (nu copii direcți ai corps)
+      ========================================================== -->
+
+ <!-- returnează elementul de titlu real (h1/Journal/h2.nchap),
+      fie el însuși $item, fie un descendent-fiu direct al lui $item -->
+ <xsl:function name="local:heading-node" as="element()?">
+  <xsl:param name="item" as="element()"/>
+  <xsl:sequence select="
+   if ($item[self::h1 or self::Journal or self::h2[@class='nchap']])
+   then $item
+   else ($item/(h1 | Journal | h2[@class='nchap']))[1]"/>
+ </xsl:function>
+
+ <xsl:function name="local:is-chapter-start" as="xs:boolean">
+  <xsl:param name="item" as="element()"/>
+  <xsl:sequence select="exists(local:heading-node($item))"/>
+ </xsl:function>
+
+ <!-- ==========================================================
+      FIX 2: hartă pagină -> fișier, pentru rescrierea linkurilor
+      de index de tip href="#pageNNN" după spargerea în fișiere
+      ========================================================== -->
  <xsl:variable name="pageToFile">
-  <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+  <xsl:for-each-group select="livre/corps/*"
+   group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
-   <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
+   <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
-   <xsl:for-each select="current-group()//RP">
-    <page num="{@page}" file="{$file-name}"/>
+   <xsl:for-each select="current-group()//RP | current-group()//span[starts-with(@id,'page')]">
+    <xsl:variable name="pid" select="if (self::RP) then @page else substring-after(@id,'page')"/>
+    <page xmlns="" num="{$pid}" file="{$file-name}"/>
    </xsl:for-each>
   </xsl:for-each-group>
  </xsl:variable>
- 
+
  <xsl:key name="page-file-key" match="page" use="@num"/>
+
  <xsl:template match="/">
-  
+
   <xsl:variable name="groupInfo">
-   <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+   <xsl:for-each-group select="livre/corps/*"
+    group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
     <group
      pos="{format-number(position(), '00')}"
-     is-front="{not(self::h1 or self::Journal or self::h2[@class='nchap'])}"/>
+     is-front="{not(local:is-chapter-start(.))}"/>
    </xsl:for-each-group>
   </xsl:variable>
-  
+
   <xsl:result-document href="nav.xhtml" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
    <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"
@@ -56,16 +86,17 @@
      <nav epub:type="toc" id="toc" role="doc-toc" aria-label="Table des mati&#232;res">
       <h1>Table des mati&#232;res</h1>
       <ol>
-       <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+       <xsl:for-each-group select="livre/corps/*"
+        group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
         <xsl:variable name="pos" select="format-number(position(), '00')"/>
-        <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
+        <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
         <li>
          <a href="chap_{$pos}_{if ($is-front) then 'intro' else 'chapitre'}.xhtml">
           <xsl:choose>
            <xsl:when test="$is-front">Introduction</xsl:when>
            <xsl:otherwise>
             <xsl:variable name="rawTitle">
-             <xsl:apply-templates select="." mode="getText"/>
+             <xsl:apply-templates select="local:heading-node(.)" mode="getText"/>
             </xsl:variable>
             <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
             <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
@@ -94,9 +125,10 @@
       <nav epub:type="page-list" id="page-list" hidden="" role="doc-pagelist" aria-label="Liste des pages">
        <h2>Liste des pages</h2>
        <ol>
-        <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+        <xsl:for-each-group select="livre/corps/*"
+         group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
          <xsl:variable name="pos" select="format-number(position(), '00')"/>
-         <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
+         <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
          <xsl:variable name="file-name"
           select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
          <xsl:for-each select="current-group()//RP">
@@ -115,9 +147,10 @@
    </html>
   </xsl:result-document>
 
-  <xsl:for-each-group select="livre/corps/*" group-starting-with="h1 | Journal | h2[@class='nchap']">
+  <xsl:for-each-group select="livre/corps/*"
+   group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
    <xsl:variable name="pos" select="format-number(position(), '00')"/>
-   <xsl:variable name="is-front" select="not(self::h1 or self::Journal or self::h2[@class='nchap'])"/>
+   <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
    <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
    <xsl:result-document href="{$file-name}" method="xhtml" encoding="UTF-8" indent="yes" include-content-type="no">
     <xsl:text disable-output-escaping="yes">&#10;&lt;!DOCTYPE html&gt;&#10;</xsl:text>
@@ -129,7 +162,7 @@
        <xsl:choose>
         <xsl:when test="not($is-front)">
          <xsl:variable name="rawTitle">
-          <xsl:apply-templates select="." mode="getText"/>
+          <xsl:apply-templates select="local:heading-node(.)" mode="getText"/>
          </xsl:variable>
          <xsl:variable name="firstSegment" select="normalize-space(tokenize(normalize-space($rawTitle), '#')[1])"/>
          <xsl:value-of select="if ($firstSegment != '') then $firstSegment else normalize-space($rawTitle)"/>
@@ -154,14 +187,7 @@
   </xsl:for-each-group>
 
  </xsl:template>
- <xsl:template match="a[starts-with(@href,'#page')]">
-  <xsl:variable name="pageNum" select="substring-after(@href,'#page')"/>
-  <xsl:variable name="targetFile" select="key('page-file-key', $pageNum, $pageToFile)/@file"/>
-  <a>
-   <xsl:attribute name="href" select="if ($targetFile != '') then concat($targetFile, '#page', $pageNum) else @href"/>
-   <xsl:apply-templates select="@*[not(local-name()='href')]|node()"/>
-  </a>
- </xsl:template>
+
  <xsl:template match="a[@id and not(node()) and following-sibling::node()[1][self::a[span[@class='apnb']]]]"/>
 
  <xsl:template match="a[span[@class='apnb']]">
@@ -238,6 +264,17 @@
   <span epub:type="pagebreak" role="doc-pagebreak" id="page{@page}" title="{@page}"/>
  </xsl:template>
 
+ <!-- marcaje de pagină deja prezente în sursă ca <span id="pageXXX" title="XXX"/>
+      (ex. pagini din front-matter numerotate cu cifre romane: pageIII, pageIV...) -->
+ <xsl:template match="span[starts-with(@id,'page')]">
+  <span epub:type="pagebreak" role="doc-pagebreak" id="{@id}">
+   <xsl:if test="@title">
+    <xsl:attribute name="title" select="@title"/>
+   </xsl:if>
+   <xsl:apply-templates/>
+  </span>
+ </xsl:template>
+
  <xsl:template match="Exergue">
   <div class="Exergue">
    <xsl:apply-templates/>
@@ -296,6 +333,17 @@
    </xsl:if>
    <xsl:apply-templates/>
   </xsl:element>
+ </xsl:template>
+
+ <!-- FIX 3: rescrie linkurile de index href="#pageNNN" către
+      fișierul corect rezultat din spargere -->
+ <xsl:template match="a[starts-with(@href,'#page')]">
+  <xsl:variable name="pageNum" select="substring-after(@href,'#page')"/>
+  <xsl:variable name="targetFile" select="key('page-file-key', $pageNum, $pageToFile)/@file"/>
+  <a>
+   <xsl:attribute name="href" select="if ($targetFile != '') then concat($targetFile, '#page', $pageNum) else @href"/>
+   <xsl:apply-templates select="@*[not(local-name()='href')]|node()"/>
+  </a>
  </xsl:template>
 
  <xsl:template match="text()[not(ancestor::a)]">
