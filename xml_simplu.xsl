@@ -9,7 +9,21 @@
       fără a modifica stylesheet-ul pentru fiecare carte. -->
  <xsl:param name="cover-title" select="'Droit maritime'"/>
  <xsl:param name="cover-alt" select="concat('Couverture: ', $cover-title)"/>
-
+ <xsl:variable name="harta-ancorelor">
+  <xsl:for-each-group select="root()//livre/corps/*" 
+   group-starting-with="h1 | Journal | h2[@class='nchap'] | *[h1 or Journal or h2[@class='nchap']]">
+   
+   <xsl:variable name="pos" select="format-number(position(), '00')"/>
+   <xsl:variable name="is-front" select="not(local:is-chapter-start(.))"/>
+   <xsl:variable name="file-name" select="concat('chap_', $pos, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
+   
+   <!-- Salvăm în memorie fiecare ancoră și fișierul ei exact -->
+   <xsl:for-each select="current-group()//a[@id]">
+    <ref id="{@id}" href="{$file-name}"/>
+   </xsl:for-each>
+   
+  </xsl:for-each-group>
+ </xsl:variable>
  <xsl:template match="node()|@*" name="identity">
   <xsl:choose>
    <xsl:when test="self::*">
@@ -399,52 +413,23 @@
    </xsl:non-matching-substring>
   </xsl:analyze-string>
  </xsl:template>
- <!-- 1. Text -> duce spre notes.xhtml -->
+ <!-- 1. Din text -> spre notes.xhtml -->
  <xsl:template match="span[@class='apnb']/a">
   <a href="../Text/notes.xhtml{@href}">
    <xsl:apply-templates select="node()"/>
   </a>
  </xsl:template>
  
- <!-- 2. Note (defnotes) -> duce înapoi spre capitolul corect din text -->
+ <!-- 2. Din note -> înapoi spre capitolul corect, bazat STRICT pe hartă -->
  <xsl:template match="div[contains(@class, 'defnotes')]//a[starts-with(@href, '#')]">
   
-  <!-- Preluăm ID-ul de retur (ex: AN1) -->
+  <!-- Preluăm ID-ul, de ex: AN1 -->
   <xsl:variable name="backId" select="substring-after(@href, '#')"/>
-  <!-- Căutăm ancora corespondentă în corpul cărții -->
-  <xsl:variable name="anchor" select="//a[@id = $backId]"/>
   
-  <!-- Găsim nodul principal din <corps> care conține această ancoră -->
-  <xsl:variable name="block" select="$anchor/ancestor-or-self::*[parent::corps]"/>
+  <!-- GĂSIM DIRECT FIȘIERUL ÎN HARTĂ. Simplu și curat. -->
+  <xsl:variable name="fileName" select="$harta-ancorelor/*[local-name()='ref'][@id = $backId]/@href"/>
   
-  <!-- Căutăm titlul de capitol care marchează începutul grupului pentru acest bloc -->
-  <xsl:variable name="group-starter" select="($block/preceding-sibling::* | $block)[
-   self::h1 or 
-   self::Journal or 
-   self::h2[@class='nchap'] or 
-   child::h1 or 
-   child::Journal or 
-   child::h2[@class='nchap']
-   ][last()]"/>
-  
-  <!-- Calculăm indexul (poziția) fișierului pe baza numărului de capitole anterioare -->
-  <xsl:variable name="pos" select="count($group-starter/preceding-sibling::*[
-   self::h1 or 
-   self::Journal or 
-   self::h2[@class='nchap'] or 
-   child::h1 or 
-   child::Journal or 
-   child::h2[@class='nchap']
-   ]) + 1"/>
-  <xsl:variable name="pos-format" select="format-number($pos, '00')"/>
-  
-  <!-- Verificăm tipul de fișier folosind funcția ta (intro sau chapitre) -->
-  <xsl:variable name="is-front" select="not(local:is-chapter-start($group-starter))"/>
-  
-  <!-- Generăm numele exact al fișierului -->
-  <xsl:variable name="fileName" select="concat('chap_', $pos-format, '_', if ($is-front) then 'intro' else 'chapitre', '.xhtml')"/>
-  
-  <!-- Reconstruim linkul cu calea completă -->
+  <!-- Generăm linkul final -->
   <a href="../Text/{$fileName}{@href}">
    <xsl:apply-templates select="node()"/>
   </a>
