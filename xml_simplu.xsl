@@ -3,7 +3,8 @@
  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:epub="http://www.idpf.org/2007/ops"
  xmlns:local="urn:local-functions"
  xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xs local" version="3.0">
-
+ <xsl:param name="cover-title" select="'Droit maritime'"/>
+ <xsl:param name="cover-alt" select="concat('Couverture: ', $cover-title)"/>
  <xsl:template match="node()|@*" name="identity">
   <xsl:choose>
    <xsl:when test="self::*">
